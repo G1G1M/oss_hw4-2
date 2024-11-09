@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+      crossorigin="anonymous"
+    />
+
+    <title>Document</title>
+    <script
+      src="https://code.jquery.com/jquery-3.7.1.js"
+      integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4="
+      crossorigin="anonymous"
+    ></script>
+    <style>
+      .member {
+        display: flex;
+        justify-content: space-between;
+        width: 1000px;
+        padding-bottom: 5px;
+      }
+      .btn1 {
+        background-color: white;
+      }
+      .btn2 {
+        background-color: orangered;
+        color: black;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Membership Management</h2>
+    <button id="btnStu" class="btn btn-warning">회원 정보 가져오기</button>
+    <button
+      type="button"
+      class="btn btn-primary"
+      data-bs-toggle="modal"
+      data-bs-target="#staticBackdrop"
+    >
+      회원 추가
+    </button>
+
+    <div id="contents"></div>
+
+    <div
+      class="modal fade"
+      id="staticBackdrop"
+      data-bs-backdrop="static"
+      data-bs-keyboard="false"
+      tabindex="-1"
+      aria-labelledby="staticBackdropLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="staticBackdropLabel">
+              Modal title
+            </h1>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+              onclick="resetInput()"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <div style="margin-top: 10px">
+              <label for="name">이름:</label>
+              <input type="text" id="name" name="name" />
+              <label for="age">나이:</label>
+              <input type="number" id="age" name="age" />
+
+              <label for="job">직업:</label>
+              <input type="text" id="job" name="job" />
+
+              <label for="phoneNumber">번호:</label>
+              <input type="text" id="phoneNumber" name="phoneNumber" />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+              onclick="resetInput()"
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              id="btnAdd"
+              class="btn btn-primary"
+              data-bs-dismiss="modal"
+            >
+              확인
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      window.onload = function () {
+        let btnStu = document.getElementById('btnStu');
+        let btnAdd = document.getElementById('btnAdd');
+
+        btnStu.addEventListener('click', getStudents);
+        btnAdd.addEventListener('click', postData);
+      };
+
+      function getStudents() {
+        let contents = document.getElementById('contents');
+        const xhr = new XMLHttpRequest();
+
+        xhr.open(
+          'GET',
+          'https://672818e6270bd0b975545367.mockapi.io/api/v1/user'
+        );
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.send();
+
+        xhr.onload = () => {
+          if (xhr.status === 200) {
+            const res = JSON.parse(xhr.response);
+            contents.innerHTML = makeList(res);
+          } else {
+            console.log(xhr.status, xhr.statusText);
+          }
+        };
+      }
+
+      function makeList(data) {
+        let html = '<ul>';
+        console.log(data);
+        data.forEach((item) => {
+          html += `<li class="member"> 
+          이름: ${item.name}/ 나이: ${item.age}/ 직업: ${item.job}/ 번호: ${item.phoneNumber}
+          <span>
+            <button data-bs-toggle="modal" data-bs-target="#staticBackdrop" class="btn1" onClick="editChange('${item.id}', '${item.name}', '${item.age}', '${item.job}', '${item.phoneNumber}')">
+              수정</button>
+            <button onClick="deleteData('${item.id}')" class="btn2">삭제</button>
+          </span>
+        </li>`;
+        });
+        html += '</ul>';
+        return html;
+      }
+
+      function postData() {
+        let contents = document.getElementById('contents');
+        let name = document.getElementById('name');
+        let age = document.getElementById('age');
+        let job = document.getElementById('job');
+        let phoneNumber = document.getElementById('phoneNumber');
+
+        const xhr = new XMLHttpRequest();
+        xhr.open(
+          'POST',
+          'https://672818e6270bd0b975545367.mockapi.io/api/v1/user'
+        );
+        xhr.setRequestHeader('content-type', 'application/json;charset=UTF-8');
+        const data = {
+          name: name.value,
+          age: age.value,
+          job: job.value,
+          phoneNumber: phoneNumber.value,
+        };
+
+        xhr.send(JSON.stringify(data));
+        xhr.onload = () => {
+          if (xhr.status === 201) {
+            name.value = '';
+            age.value = '';
+            const res = JSON.parse(xhr.response);
+            getStudents();
+          } else {
+            console.log(xhr.status, xhr.statusText);
+          }
+        };
+      }
+
+      function editChange(id, nameValue, ageValue, jobValue, phoneNumberValue) {
+        let name = document.getElementById('name');
+        let age = document.getElementById('age');
+        let job = document.getElementById('job');
+        let phoneNumber = document.getElementById('phoneNumber');
+
+        name.value = nameValue;
+        age.value = ageValue;
+        job.value = jobValue;
+        phoneNumber.value = phoneNumberValue;
+
+        let btnAdd = document.getElementById('btnAdd');
+
+        btnAdd.removeEventListener('click', postData);
+
+        const handler = function () {
+          updateData(id);
+          정;
+          btnAdd.removeEventListener('click', handler);
+          btnAdd.addEventListener('click', postData);
+        };
+
+        btnAdd.addEventListener('click', handler);
+      }
+
+      function resetInput() {
+        let name = document.getElementById('name');
+        let age = document.getElementById('age');
+        let job = document.getElementById('job');
+        let phoneNumber = document.getElementById('phoneNumber');
+
+        name.value = '';
+        age.value = '';
+        job.value = '';
+        phoneNumber.value = '';
+      }
+
+      function updateData(id) {
+        const xhr = new XMLHttpRequest();
+
+        let contents = document.getElementById('contents');
+        let name = document.getElementById('name');
+        let age = document.getElementById('age');
+        let job = document.getElementById('job');
+        let phoneNumber = document.getElementById('phoneNumber');
+
+        xhr.open(
+          'PUT',
+          'https://672818e6270bd0b975545367.mockapi.io/api/v1/user/' + id
+        );
+        xhr.setRequestHeader('content-type', 'application/json;charset=UTF-8');
+        const data = {
+          name: name.value,
+          age: age.value,
+          job: job.value,
+          phoneNumber: phoneNumber.value,
+        };
+
+        xhr.send(JSON.stringify(data));
+
+        xhr.onload = () => {
+          if (xhr.status === 200) {
+            const res = JSON.parse(xhr.response);
+            console.log(res);
+            getStudents();
+            resetInput();
+          } else {
+            console.log(xhr.status, xhr.statusText);
+          }
+        };
+      }
+
+      function deleteData(id) {
+        const xhr = new XMLHttpRequest();
+
+        console.log('id 확인', id);
+
+        xhr.open(
+          'DELETE',
+          'https://672818e6270bd0b975545367.mockapi.io/api/v1/user/' + id
+        );
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.send();
+
+        xhr.onload = () => {
+          if (xhr.status === 200) {
+            const res = JSON.parse(xhr.response);
+
+            console.log(xhr.status, res);
+            getStudents();
+          } else {
+            console.log('삭제 실패', xhr.status, xhr.statusText);
+          }
+        };
+        xhr.onerror = () => {
+          console.log('DELETE 요청 실패 - 네트워크 오류 발생');
+        };
+      }
+    </script>
+
+    <script
+      src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"
+      integrity="sha384-IQsoLXl5PILFhosVNubq5LC7Qb9DXgDA9i+tQ8Zj3iwWAwPtgFTxbJ8NT4GN1R8p"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js"
+      integrity="sha384-cVKIPhGWiC2Al4u+LWgxfKTRIcfu0JTxR+EQDz/bgldoEyl4H0zUF0QKbrJ0EcQF"
+      crossorigin="anonymous"
+    ></script>
+  </body>
+</html>
